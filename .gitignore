@@ -7,5 +7,6 @@ include
 lib
 lib64
 License
+dist
 
 *.cfg
