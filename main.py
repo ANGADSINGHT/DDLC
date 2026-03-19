@@ -3,7 +3,7 @@ import sys
 import shutil
 import os
 
-DEV_MODE = True
+DEV_MODE = False
 
 pygame.init()
 
@@ -32,11 +32,26 @@ class Game:
         self.running = True
         self.Name = pygame.image.load(
             resource_path('assets/name.png')).convert_alpha()
+
+        self.Old_ddcc = pygame.image.load(
+            resource_path('assets/old_ddcc.png')).convert_alpha()
+        
+        ddcc_width, ddcc_height = self.Old_ddcc.get_size()
+        ddcc_scale = min(
+            SCREEN_WIDTH / ddcc_width, SCREEN_HEIGHT / ddcc_height)
+        self.Old_ddcc = pygame.transform.smoothscale(
+            self.Old_ddcc,
+            (int(ddcc_width * ddcc_scale), int(ddcc_height * ddcc_scale)),
+        )
+        self.Old_ddcc_rect = self.Old_ddcc.get_rect(center=(SCREEN_WIDTH // 2,
+                                                    SCREEN_HEIGHT // 2))
+
         self.stage = 0
         self.stages = {
             0: self.NameInputStart,
             1: self.NameInput
         }
+        self.playername = ""
         self.Name_width = self.Name.get_width()
         self.Name_height = self.Name.get_height()
         self.Name_rect = self.Name.get_rect(center=(SCREEN_WIDTH // 2,
@@ -44,6 +59,12 @@ class Game:
         self.overlay = pygame.Surface(
             (SCREEN_WIDTH, SCREEN_HEIGHT), pygame.SRCALPHA)
         self.overlay.fill((0, 0, 0, 128))  # 128 = 50% opacity
+
+        self.Nametxt = riffic30.render("" , True, (0,0,0))
+        self.Nametxt_width = self.Nametxt.get_width()
+        self.Nametxt_height = self.Nametxt.get_height()
+        self.Nametxt_rect = self.Nametxt.get_rect(center=(SCREEN_WIDTH // 2,
+                                                    SCREEN_HEIGHT // 2))
 
     def run(self):
         while self.running:
@@ -54,16 +75,47 @@ class Game:
                 if event.type == pygame.QUIT:
                     self.running = False
 
-            self.stages[self.stage]()
+            self.stages[self.stage](events)
+            if len(self.playername) >= 15:
+                self.old_ddcc()
+            
+            screen.blit(self.Name, self.Name_rect)
+            screen.blit(self.Nametxt, self.Nametxt_rect)
 
             pygame.display.flip()
 
-    def NameInput(self):
-        screen.blit(self.Name, self.Name_rect)
+    def NameInput(self, events):
+        for event in events:
+            if event.type == pygame.KEYDOWN:
+                key = event.key
+                if key >= pygame.K_a and key <= pygame.K_z:
+                    self.playername += chr(key)
+                elif key == pygame.K_BACKSPACE:
+                    self.playername = self.playername[:len(self.playername)-1]
+                
+                self.Nametxt = riffic30.render(self.playername, True, (0,0,0))
+                self.Nametxt_width = self.Nametxt.get_width()
+                self.Nametxt_height = self.Nametxt.get_height()
+                self.Nametxt_rect = self.Nametxt.get_rect(center=(SCREEN_WIDTH // 2,
+                                                            SCREEN_HEIGHT // 2))
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if self.playername.lower() != "angad":
+                    self.Nametxt = riffic38.render("Stupid name", True, (255,0,0))
+                else:
+                    self.Nametxt = riffic38.render("Smart name", True, (0,255,0))
+                self.Nametxt_width = self.Nametxt.get_width()
+                self.Nametxt_height = self.Nametxt.get_height()
+                self.Nametxt_rect = self.Nametxt.get_rect(center=(SCREEN_WIDTH // 2,
+                                                            SCREEN_HEIGHT // 2))
 
-    def NameInputStart(self):
+    def NameInputStart(self, _):
         screen.blit(self.overlay, (0, 0))
+        screen.blit(self.Name, self.Name_rect)
         self.stage += 1
+
+    def old_ddcc(self):
+        screen.blit(self.Old_ddcc, self.Old_ddcc_rect)
+        screen.blit(self.overlay, (0, 0))
 
 
 class Intro:
